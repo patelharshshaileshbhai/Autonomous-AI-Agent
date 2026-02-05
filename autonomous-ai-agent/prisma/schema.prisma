@@ -1,0 +1,136 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model - manages authentication and agent ownership
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  agents    Agent[]
+
+  @@index([email])
+}
+
+// Agent model - autonomous AI agent with its own wallet
+model Agent {
+  id                  String   @id @default(uuid())
+  name                String
+  walletAddress       String   @unique
+  encryptedPrivateKey String
+  spendingLimit       Float    @default(0.1)
+  totalSpent          Float    @default(0)
+  isActive            Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  userId              String
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  tasks          AgentTask[]
+  memory         AgentMemory[]
+  blockchainLogs BlockchainLog[]
+
+  @@index([userId])
+  @@index([walletAddress])
+  @@index([isActive])
+}
+
+// AgentTask model - tasks assigned to an agent
+model AgentTask {
+  id         String     @id @default(uuid())
+  agentId    String
+  prompt     String
+  status     TaskStatus @default(PENDING)
+  cost       Float?
+  result     String?    @db.Text
+  reasoning  String?    @db.Text
+  executedAt DateTime?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([agentId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// AgentMemory model - stores context and conversation history
+model AgentMemory {
+  id        String   @id @default(uuid())
+  agentId   String
+  context   String   @db.Text
+  role      String   @default("system")
+  createdAt DateTime @default(now())
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([agentId])
+  @@index([createdAt])
+}
+
+// BlockchainLog model - logs agent actions on-chain
+model BlockchainLog {
+  id        String   @id @default(uuid())
+  agentId   String
+  txHash    String   @unique
+  action    String
+  cost      Float
+  gasUsed   Float?
+  timestamp DateTime @default(now())
+  status    TxStatus @default(PENDING)
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([agentId])
+  @@index([txHash])
+  @@index([timestamp])
+}
+
+// Scheduled tasks for autonomous execution
+model ScheduledTask {
+  id        String              @id @default(uuid())
+  agentId   String
+  prompt    String
+  cronExpr  String
+  isActive  Boolean             @default(true)
+  lastRunAt DateTime?
+  nextRunAt DateTime?
+  status    ScheduledTaskStatus @default(ACTIVE)
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+
+  @@index([agentId])
+  @@index([isActive])
+  @@index([nextRunAt])
+}
+
+enum TaskStatus {
+  PENDING
+  RUNNING
+  DONE
+  FAILED
+}
+
+enum TxStatus {
+  PENDING
+  CONFIRMED
+  FAILED
+}
+
+enum ScheduledTaskStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+  FAILED
+}
