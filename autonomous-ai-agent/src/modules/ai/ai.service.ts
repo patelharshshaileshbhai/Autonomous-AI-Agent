@@ -46,7 +46,10 @@ class AIService {
 
     constructor() {
         this.genAI = new GoogleGenerativeAI(env.gemini.apiKey);
-        this.model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+        // Use configurable model name, default to gemini-2.0-flash-exp (latest)
+        const modelName = process.env.GEMINI_MODEL || 'gemini-2.0-flash-exp';
+        logger.info(`Using Gemini model: ${modelName}`);
+        this.model = this.genAI.getGenerativeModel({ model: modelName });
     }
 
     /**
@@ -66,9 +69,19 @@ class AIService {
             const analysis = this.parseJsonResponse<TaskAnalysis>(text);
 
             return analysis;
-        } catch (error) {
+        } catch (error: unknown) {
+            const err = error as { status?: number; message?: string };
             logger.error('Failed to analyze task', error);
-            throw new AIServiceError('Failed to analyze task with AI');
+
+            if (err.status === 404) {
+                throw new AIServiceError('Gemini API key is invalid or model not found. Please check your GEMINI_API_KEY.');
+            } else if (err.status === 403) {
+                throw new AIServiceError('Gemini API access denied. Please verify your API key permissions.');
+            } else if (err.status === 429) {
+                throw new AIServiceError('Gemini API rate limit exceeded. Please try again later.');
+            }
+
+            throw new AIServiceError(err.message || 'Failed to analyze task with AI');
         }
     }
 
