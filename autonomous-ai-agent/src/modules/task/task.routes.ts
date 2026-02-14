@@ -12,6 +12,7 @@ router.use(authenticate);
 // Task routes
 router.post('/create', validate(createTaskSchema), taskController.createTask.bind(taskController));
 router.post('/:id/execute', validate(taskIdParamSchema), taskController.executeTask.bind(taskController));
+router.post('/:id/retry', validate(taskIdParamSchema), taskController.retryTask.bind(taskController));
 router.get('/:id', validate(taskIdParamSchema), taskController.getTask.bind(taskController));
 router.get('/agent/:agentId', validate(agentTasksParamSchema), taskController.getAgentTasks.bind(taskController));
 

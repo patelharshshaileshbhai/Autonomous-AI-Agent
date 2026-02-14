@@ -19,6 +19,7 @@ const envSchema = z.object({
 
     // Gemini AI
     GEMINI_API_KEY: z.string().min(1, 'GEMINI_API_KEY is required'),
+    GEMINI_MODEL: z.string().default('gemini-2.0-flash'),
 
     // Blockchain
     POLYGON_RPC_URL: z.string().url('POLYGON_RPC_URL must be a valid URL'),
@@ -52,6 +53,7 @@ const parseEnv = () => {
             },
             gemini: {
                 apiKey: parsed.GEMINI_API_KEY,
+                model: parsed.GEMINI_MODEL,
             },
             blockchain: {
                 rpcUrl: parsed.POLYGON_RPC_URL,

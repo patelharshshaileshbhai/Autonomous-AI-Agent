@@ -46,8 +46,8 @@ class AIService {
 
     constructor() {
         this.genAI = new GoogleGenerativeAI(env.gemini.apiKey);
-        // Use configurable model name, default to gemini-2.0-flash-exp (latest)
-        const modelName = process.env.GEMINI_MODEL || 'gemini-2.0-flash-exp';
+        // Use configurable model name
+        const modelName = env.gemini.model;
         logger.info(`Using Gemini model: ${modelName}`);
         this.model = this.genAI.getGenerativeModel({ model: modelName });
     }
@@ -57,6 +57,7 @@ class AIService {
      */
     async analyzeTask(input: DecisionInput): Promise<TaskAnalysis> {
         try {
+            logger.info(`Analyzing task with model: ${env.gemini.model}`);
             const prompt = AI_PROMPTS.taskAnalysis(input);
 
             const result = await this.model.generateContent(prompt);

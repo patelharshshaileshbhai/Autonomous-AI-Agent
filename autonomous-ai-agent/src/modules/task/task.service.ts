@@ -233,6 +233,36 @@ class TaskService {
     }
 
     /**
+     * Retry a failed task (reset status to PENDING)
+     */
+    async retryTask(taskId: string, userId: string): Promise<TaskResult> {
+        const task = await prisma.agentTask.findUnique({
+            where: { id: taskId },
+            include: { agent: true },
+        });
+
+        if (!task || task.agent.userId !== userId) {
+            throw new NotFoundError('Task');
+        }
+
+        const updatedTask = await prisma.agentTask.update({
+            where: { id: taskId },
+            data: {
+                status: 'PENDING',
+                result: null,
+                reasoning: null,
+                cost: null,
+                executedAt: null,
+                updatedAt: new Date(),
+            },
+        });
+
+        logger.info('Task reset for retry', { taskId });
+
+        return this.mapTaskToResult(updatedTask);
+    }
+
+    /**
      * Get task by ID
      */
     async getTaskById(taskId: string, userId: string): Promise<TaskResult> {

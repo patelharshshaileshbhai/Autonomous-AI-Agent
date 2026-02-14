@@ -57,6 +57,7 @@ export const taskApi = {
     create: (agentId: string, prompt: string) =>
         api.post('/tasks/create', { agentId, prompt }),
     execute: (taskId: string) => api.post(`/tasks/${taskId}/execute`),
+    retry: (taskId: string) => api.post(`/tasks/${taskId}/retry`),
     getById: (id: string) => api.get(`/tasks/${id}`),
     getByAgent: (agentId: string) => api.get(`/tasks/agent/${agentId}`),
 };

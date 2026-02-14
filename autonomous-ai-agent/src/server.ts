@@ -23,6 +23,7 @@ async function main() {
         app.listen(env.server.port, () => {
             logger.info(`🔥 Server running on http://localhost:${env.server.port}`);
             logger.info(`📝 Environment: ${env.server.nodeEnv}`);
+            logger.info(`🤖 Gemini Model: ${env.gemini.model}`);
             logger.info(`🔗 Blockchain RPC: ${env.blockchain.rpcUrl}`);
 
             if (env.blockchain.contractAddress) {
