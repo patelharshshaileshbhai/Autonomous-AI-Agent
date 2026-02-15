@@ -44,6 +44,26 @@ export class TaskController {
     }
 
     /**
+     * POST /tasks/:id/retry
+     */
+    async retryTask(req: Request, res: Response, next: NextFunction): Promise<void> {
+        try {
+            const userId = req.user!.userId;
+            const taskId = req.params['id'] as string;
+
+            const task = await taskService.retryTask(taskId, userId);
+
+            res.status(200).json({
+                success: true,
+                message: 'Task reset for retry',
+                data: { task },
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    /**
      * GET /tasks/:id
      */
     async getTask(req: Request, res: Response, next: NextFunction): Promise<void> {

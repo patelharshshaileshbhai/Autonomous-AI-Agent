@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+// const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000'; // LOCAL
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://54.84.238.141:4000'; // LIVE EC2
 
 const api = axios.create({
     baseURL: API_BASE_URL,
@@ -57,6 +58,7 @@ export const taskApi = {
     create: (agentId: string, prompt: string) =>
         api.post('/tasks/create', { agentId, prompt }),
     execute: (taskId: string) => api.post(`/tasks/${taskId}/execute`),
+    retry: (taskId: string) => api.post(`/tasks/${taskId}/retry`),
     getById: (id: string) => api.get(`/tasks/${id}`),
     getByAgent: (agentId: string) => api.get(`/tasks/agent/${agentId}`),
 };

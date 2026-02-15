@@ -25,9 +25,7 @@ services:
 
   # Backend Application
   backend:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ${DOCKER_IMAGE:-saavajsena/autonomous-agent:1.0.0}
     container_name: autonomous-ai-agent
     restart: unless-stopped
     ports:
@@ -49,6 +47,7 @@ services:
       
       # Gemini AI
       - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.0-flash}
       
       # Blockchain Configuration
       - POLYGON_RPC_URL=${POLYGON_RPC_URL:-https://rpc-amoy.polygon.technology}
@@ -63,6 +62,9 @@ services:
       
       # Smart Contract Deployment
       - DEPLOYER_PRIVATE_KEY=${DEPLOYER_PRIVATE_KEY:-}
+
+      # CORS - Allow Vercel frontend
+      - CORS_ORIGIN=${CORS_ORIGIN:-*}
     
     networks:
       - app-network

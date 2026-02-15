@@ -1,7 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAgentStore, type Agent } from '../stores/agentStore';
+import {
+    Plus,
+    Bot,
+    Wallet,
+    Activity,
+    TrendingUp,
+    X,
+    Sparkles,
+    Copy,
+    Check,
+} from 'lucide-react';
 
+/* ==================== CREATE AGENT MODAL ==================== */
 interface CreateAgentModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -37,9 +49,37 @@ const CreateAgentModal: React.FC<CreateAgentModalProps> = ({ isOpen, onClose }) 
     return (
         <div className="modal-overlay" onClick={onClose}>
             <div className="modal" onClick={(e) => e.stopPropagation()}>
-                <h2 className="modal-title">Create New Agent</h2>
+                <div className="flex-between mb-lg">
+                    <h2 className="modal-title" style={{ marginBottom: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <div
+                                style={{
+                                    width: 36,
+                                    height: 36,
+                                    background: 'linear-gradient(135deg, var(--gradient-start), var(--gradient-end))',
+                                    borderRadius: 10,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: 'white',
+                                }}
+                            >
+                                <Bot size={18} />
+                            </div>
+                            Create New Agent
+                        </div>
+                    </h2>
+                    <button className="btn btn-ghost btn-icon" onClick={onClose}>
+                        <X size={18} />
+                    </button>
+                </div>
 
-                {error && <div className="error">{error}</div>}
+                {error && (
+                    <div className="error">
+                        <span>{error}</span>
+                        <button className="error-dismiss" onClick={() => setError('')}>×</button>
+                    </div>
+                )}
 
                 <form onSubmit={handleSubmit}>
                     <div className="input-group">
@@ -67,12 +107,22 @@ const CreateAgentModal: React.FC<CreateAgentModalProps> = ({ isOpen, onClose }) 
                         />
                     </div>
 
-                    <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                    <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
                         <button type="button" className="btn btn-secondary" onClick={onClose}>
                             Cancel
                         </button>
                         <button type="submit" className="btn btn-primary" disabled={isLoading}>
-                            {isLoading ? 'Creating...' : 'Create Agent'}
+                            {isLoading ? (
+                                <>
+                                    <div className="spinner" style={{ width: 16, height: 16, borderWidth: 2 }} />
+                                    Creating...
+                                </>
+                            ) : (
+                                <>
+                                    <Sparkles size={16} />
+                                    Create Agent
+                                </>
+                            )}
                         </button>
                     </div>
                 </form>
@@ -81,18 +131,46 @@ const CreateAgentModal: React.FC<CreateAgentModalProps> = ({ isOpen, onClose }) 
     );
 };
 
-const AgentCard: React.FC<{ agent: Agent; onClick: () => void }> = ({ agent, onClick }) => {
+/* ==================== AGENT CARD ==================== */
+const AgentCard: React.FC<{ agent: Agent; onClick: () => void; index: number }> = ({
+    agent,
+    onClick,
+    index,
+}) => {
     const shortAddress = `${agent.walletAddress.slice(0, 6)}...${agent.walletAddress.slice(-4)}`;
+    const [copied, setCopied] = useState(false);
+
+    const handleCopy = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        navigator.clipboard.writeText(agent.walletAddress);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
 
     return (
-        <div className="agent-card" onClick={onClick}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <h3 className="agent-name">{agent.name}</h3>
+        <div
+            className="agent-card"
+            onClick={onClick}
+            style={{ animationDelay: `${index * 0.08}s` }}
+        >
+            <div className="agent-card-header">
+                <div>
+                    <div className="agent-avatar">
+                        <Bot size={22} />
+                    </div>
+                    <h3 className="agent-name">{agent.name}</h3>
+                </div>
                 <span className={`badge ${agent.isActive ? 'badge-success' : 'badge-warning'}`}>
-                    {agent.isActive ? '● Active' : '○ Inactive'}
+                    <span className={`status-dot ${agent.isActive ? 'active' : 'inactive'}`} />
+                    {agent.isActive ? 'Active' : 'Inactive'}
                 </span>
             </div>
-            <div className="agent-address">{shortAddress}</div>
+
+            <div className="agent-address" onClick={handleCopy} title="Click to copy">
+                <span>{shortAddress}</span>
+                {copied ? <Check size={12} style={{ color: 'var(--success)' }} /> : <Copy size={12} />}
+            </div>
+
             <div className="agent-stats">
                 <div className="agent-stat">
                     <div className="agent-stat-label">Balance</div>
@@ -108,7 +186,7 @@ const AgentCard: React.FC<{ agent: Agent; onClick: () => void }> = ({ agent, onC
                 </div>
                 <div className="agent-stat">
                     <div className="agent-stat-label">Remaining</div>
-                    <div className="agent-stat-value" style={{ color: '#10b981' }}>
+                    <div className="agent-stat-value" style={{ color: 'var(--success)' }}>
                         {(agent.spendingLimit - agent.totalSpent).toFixed(4)} ETH
                     </div>
                 </div>
@@ -117,6 +195,7 @@ const AgentCard: React.FC<{ agent: Agent; onClick: () => void }> = ({ agent, onC
     );
 };
 
+/* ==================== DASHBOARD ==================== */
 export const Dashboard: React.FC = () => {
     const { agents, isLoading, error, fetchAgents } = useAgentStore();
     const [showCreateModal, setShowCreateModal] = useState(false);
@@ -136,61 +215,102 @@ export const Dashboard: React.FC = () => {
 
     return (
         <div>
+            {/* Header */}
             <div className="page-header">
-                <h1 className="page-title">Dashboard</h1>
+                <div>
+                    <h1 className="page-title">Dashboard</h1>
+                    <p className="page-subtitle">Manage your autonomous AI agents on the blockchain</p>
+                </div>
                 <button className="btn btn-primary" onClick={() => setShowCreateModal(true)}>
-                    + New Agent
+                    <Plus size={18} />
+                    New Agent
                 </button>
             </div>
 
             {/* Stats */}
-            <div className="grid grid-4" style={{ marginBottom: '32px' }}>
-                <div className="stat-card">
+            <div className="grid grid-4 mb-lg">
+                <div className="stat-card" style={{ animationDelay: '0s' }}>
+                    <div className="stat-card-icon blue">
+                        <Bot size={22} />
+                    </div>
                     <div className="stat-label">Total Agents</div>
-                    <div className="stat-value">{agents.length}</div>
+                    <div className="stat-value info">{agents.length}</div>
                 </div>
-                <div className="stat-card">
+                <div className="stat-card" style={{ animationDelay: '0.05s' }}>
+                    <div className="stat-card-icon green">
+                        <Activity size={22} />
+                    </div>
                     <div className="stat-label">Active Agents</div>
                     <div className="stat-value success">{activeAgents}</div>
                 </div>
-                <div className="stat-card">
+                <div className="stat-card" style={{ animationDelay: '0.1s' }}>
+                    <div className="stat-card-icon purple">
+                        <Wallet size={22} />
+                    </div>
                     <div className="stat-label">Total Balance</div>
-                    <div className="stat-value">{totalBalance.toFixed(4)} ETH</div>
+                    <div className="stat-value">{totalBalance.toFixed(4)} <span className="text-sm text-muted">ETH</span></div>
                 </div>
-                <div className="stat-card">
+                <div className="stat-card" style={{ animationDelay: '0.15s' }}>
+                    <div className="stat-card-icon amber">
+                        <TrendingUp size={22} />
+                    </div>
                     <div className="stat-label">Total Spent</div>
-                    <div className="stat-value warning">{totalSpent.toFixed(4)} ETH</div>
+                    <div className="stat-value warning">{totalSpent.toFixed(4)} <span className="text-sm text-muted">ETH</span></div>
                 </div>
             </div>
 
             {/* Error */}
-            {error && <div className="error">{error}</div>}
+            {error && (
+                <div className="error">
+                    <span>{error}</span>
+                </div>
+            )}
 
             {/* Loading */}
             {isLoading && (
                 <div className="loading">
-                    <div className="spinner"></div>
+                    <div className="spinner" />
+                    <div className="loading-text">Loading agents...</div>
+                </div>
+            )}
+
+            {/* Empty State */}
+            {!isLoading && agents.length === 0 && (
+                <div className="card">
+                    <div className="empty-state">
+                        <div className="empty-state-icon">
+                            <Bot size={36} />
+                        </div>
+                        <h3>No agents yet</h3>
+                        <p>Create your first AI agent to start managing autonomous blockchain wallets</p>
+                        <button className="btn btn-primary" onClick={() => setShowCreateModal(true)}>
+                            <Sparkles size={16} />
+                            Create Your First Agent
+                        </button>
+                    </div>
                 </div>
             )}
 
             {/* Agents Grid */}
-            {!isLoading && agents.length === 0 && (
-                <div className="card" style={{ textAlign: 'center', padding: '60px' }}>
-                    <h3 style={{ marginBottom: '8px' }}>No agents yet</h3>
-                    <p style={{ color: 'var(--text-secondary)', marginBottom: '24px' }}>
-                        Create your first AI agent to get started
-                    </p>
-                    <button className="btn btn-primary" onClick={() => setShowCreateModal(true)}>
-                        Create Agent
-                    </button>
-                </div>
-            )}
-
             {!isLoading && agents.length > 0 && (
-                <div className="grid grid-3">
-                    {agents.map((agent) => (
-                        <AgentCard key={agent.id} agent={agent} onClick={() => handleAgentClick(agent)} />
-                    ))}
+                <div>
+                    <div className="section-header">
+                        <div className="section-title">
+                            <Bot size={18} />
+                            Your Agents
+                            <span className="section-count">{agents.length}</span>
+                        </div>
+                    </div>
+                    <div className="grid grid-3">
+                        {agents.map((agent, index) => (
+                            <AgentCard
+                                key={agent.id}
+                                agent={agent}
+                                onClick={() => handleAgentClick(agent)}
+                                index={index}
+                            />
+                        ))}
+                    </div>
                 </div>
             )}
 
